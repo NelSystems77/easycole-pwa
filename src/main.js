@@ -13,7 +13,7 @@ import { ScheduleComponent } from './components/Schedule.js'
 import { TasksComponent } from './components/Tasks.js'
 import { StudyPlannerComponent } from './components/StudyPlanner.js'
 
-class EasyC oleApp {
+class EasyColeApp {
   constructor() {
     this.components = {
       auth: new AuthComponent(),
