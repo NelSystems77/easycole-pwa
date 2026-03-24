@@ -352,4 +352,4 @@ Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más det
 
 **¡Gracias por usar EasyCole!** 🎉
 
-Si te gusta el proyecto, dale una ⭐ en GitHub.
+Si te gusta el proyecto, dale una ⭐ en GitHub por favor.
