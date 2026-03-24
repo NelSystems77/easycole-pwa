@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="EasyCole by NelSystems - Asistente Personal Proactivo con IA para Estudiantes">
+  <meta name="theme-color" content="#06B6D4">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="EasyCole">
+  
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  
+  <!-- Iconos -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-512x512.png">
+  <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <title>EasyCole by NelSystems</title>
+</head>
+<body class="bg-gray-50 dark:bg-dark-bg text-text-primary dark:text-text-light font-sans antialiased">
+  
+  <!-- App Container -->
+  <div id="app" class="min-h-screen flex flex-col">
+    
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="fixed inset-0 bg-white dark:bg-dark-bg z-50 flex items-center justify-center">
+      <div class="text-center">
+        <div class="w-20 h-20 mx-auto mb-4 bg-primary rounded-2xl flex items-center justify-center animate-pulse">
+          <svg class="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+        </div>
+        <h2 class="text-2xl font-bold text-primary mb-2">EasyCole</h2>
+        <p class="text-gray-500 dark:text-gray-400">Cargando tu asistente...</p>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <header id="app-header" class="hidden bg-white dark:bg-dark-card shadow-sm sticky top-0 z-40">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <!-- Logo -->
+          <div class="flex items-center space-x-3">
+            <img src="/icons/icon-512x512.png" alt="NelSystems Logo" class="w-10 h-10 rounded-lg">
+            <div>
+              <h1 class="text-xl font-bold text-primary">EasyCole</h1>
+              <p class="text-xs text-gray-500 dark:text-gray-400">by NelSystems</p>
+            </div>
+          </div>
+          
+          <!-- User Menu -->
+          <div class="flex items-center space-x-4">
+            <!-- Dark Mode Toggle -->
+            <button id="theme-toggle" class="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+              <svg id="theme-icon-light" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+              </svg>
+              <svg id="theme-icon-dark" class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+              </svg>
+            </button>
+            
+            <!-- User Avatar -->
+            <button id="user-menu-button" class="flex items-center space-x-2 p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+              <div class="w-8 h-8 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                <span id="user-initials">U</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main id="app-content" class="hidden flex-1">
+      <!-- El contenido se cargará dinámicamente aquí -->
+    </main>
+
+    <!-- Bottom Navigation (Mobile) -->
+    <nav id="bottom-nav" class="hidden md:hidden bg-white dark:bg-dark-card border-t border-gray-200 dark:border-dark-border fixed bottom-0 left-0 right-0 z-40">
+      <div class="flex justify-around items-center h-16">
+        <button data-view="dashboard" class="nav-item flex flex-col items-center justify-center flex-1 h-full text-primary">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+          </svg>
+          <span class="text-xs mt-1">Inicio</span>
+        </button>
+        
+        <button data-view="backpack" class="nav-item flex flex-col items-center justify-center flex-1 h-full text-gray-400">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+          </svg>
+          <span class="text-xs mt-1">Mochila</span>
+        </button>
+        
+        <button data-view="tasks" class="nav-item flex flex-col items-center justify-center flex-1 h-full text-gray-400">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+          </svg>
+          <span class="text-xs mt-1">Tareas</span>
+        </button>
+        
+        <button data-view="study-planner" class="nav-item flex flex-col items-center justify-center flex-1 h-full text-gray-400">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+          <span class="text-xs mt-1">Estudio</span>
+        </button>
+        
+        <button data-view="schedule" class="nav-item flex flex-col items-center justify-center flex-1 h-full text-gray-400">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <span class="text-xs mt-1">Horario</span>
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- Modals Container -->
+  <div id="modal-container"></div>
+
+  <!-- Toast Container -->
+  <div id="toast-container" class="fixed top-20 right-4 z-50 space-y-2"></div>
+
+  <!-- Scripts -->
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
