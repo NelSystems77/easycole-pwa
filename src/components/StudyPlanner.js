@@ -725,6 +725,52 @@ export class StudyPlannerComponent {
 
   mount() {
     window.studyPlannerComponent = this
+    this.setupDragAndDrop()
+  }
+
+  setupDragAndDrop() {
+    // Esperar a que el DOM esté listo
+    setTimeout(() => {
+      const dropZone = document.querySelector('[id="upload-content"] > div')
+      if (!dropZone) return
+
+      // Prevenir comportamiento por defecto del navegador
+      ;['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+          e.preventDefault()
+          e.stopPropagation()
+        }, false)
+      })
+
+      // Highlight cuando arrastre sobre la zona
+      ;['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => {
+          dropZone.classList.add('border-primary', 'bg-primary/5', 'scale-[1.02]')
+          dropZone.classList.remove('border-gray-300', 'dark:border-dark-border')
+        }, false)
+      })
+
+      // Quitar highlight cuando salga
+      ;['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, () => {
+          dropZone.classList.remove('border-primary', 'bg-primary/5', 'scale-[1.02]')
+          dropZone.classList.add('border-gray-300', 'dark:border-dark-border')
+        }, false)
+      })
+
+      // Manejar el drop
+      dropZone.addEventListener('drop', (e) => {
+        const files = e.dataTransfer.files
+        if (files.length > 0) {
+          const fileInput = document.getElementById('syllabus-file')
+          // Crear un nuevo FileList con el archivo dropeado
+          const dataTransfer = new DataTransfer()
+          dataTransfer.items.add(files[0])
+          fileInput.files = dataTransfer.files
+          this.handleFileSelect({ target: fileInput })
+        }
+      }, false)
+    }, 100)
   }
 }
 
