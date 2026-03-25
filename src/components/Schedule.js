@@ -710,14 +710,15 @@ async saveExtractedClasses() {
     const promises = this.extractedClasses.map(async (cls) => {
       const scheduleData = {
         user_id: userId,
-        subject: cls.subject,
+        subject: cls.subject_name,
         day_of_week: dayMap[cls.day],
         start_time: cls.start_time,
         end_time: cls.end_time,
-        professor: cls.professor,
+        professor: cls.teacher,
         classroom: cls.classroom,
         books: null,
-        notebooks: null
+        notebooks: null,
+        other_materials: null
       }
 
       const created = await db.createSchedule(scheduleData)
