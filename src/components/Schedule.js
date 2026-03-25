@@ -565,28 +565,87 @@ async processScheduleImage() {
   this.refresh()
 
   try {
-    const base64 = await this.fileToBase64(file)
+    // Paso 1: OCR con Tesseract
+    notificationUtils.showToast('Extrayendo texto de la imagen...', 'info', 5000)
     
-    notificationUtils.showToast('Procesando imagen con IA...', 'info', 5000)
+    const { createWorker } = window.Tesseract
+    const worker = await createWorker('spa') // Español
+    
+    const { data: { text } } = await worker.recognize(file)
+    await worker.terminate()
+    
+    if (!text || text.trim().length < 50) {
+      throw new Error('No se pudo extraer texto. Asegúrate de que la imagen sea legible.')
+    }
 
-    const response = await fetch('/api/extract-schedule', {
+    // Paso 2: Groq procesa el texto
+    notificationUtils.showToast('Procesando horario con IA...', 'info', 5000)
+    
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: base64 })
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${import.meta.env.VITE_GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [{
+          role: 'user',
+          content: `Del siguiente texto extraído de un horario escolar, extrae TODAS las clases.
+
+TEXTO:
+${text}
+
+Responde ÚNICAMENTE con JSON:
+{
+  "classes": [
+    {
+      "subject": "Matemáticas",
+      "day": "Lunes",
+      "start_time": "07:00",
+      "end_time": "08:20",
+      "professor": "Nombre",
+      "classroom": "Aula 5"
+    }
+  ]
+}
+
+REGLAS:
+- Ignora RECREO/Receso
+- Días: Lunes, Martes, Miércoles, Jueves, Viernes
+- Hora: HH:MM
+- Sin markdown, solo JSON`
+        }],
+        temperature: 0.1,
+        max_tokens: 2048
+      })
     })
 
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Error al procesar la imagen')
-    }
+    if (!response.ok) throw new Error('Error al procesar con IA')
 
     const data = await response.json()
+    let jsonText = data.choices[0].message.content.trim()
+    jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
     
-    if (!data.schedule || !data.schedule.classes || data.schedule.classes.length === 0) {
-      throw new Error('No se encontraron clases en la imagen')
+    const schedule = JSON.parse(jsonText)
+    
+    if (!schedule.classes || schedule.classes.length === 0) {
+      throw new Error('No se encontraron clases')
     }
 
-    this.extractedClasses = data.schedule.classes
+    // Validar
+    this.extractedClasses = schedule.classes.filter(cls => {
+      if (!cls.subject || !cls.day || !cls.start_time || !cls.end_time) return false
+      
+      if (cls.start_time.length === 5) cls.start_time += ':00'
+      if (cls.end_time.length === 5) cls.end_time += ':00'
+      
+      cls.professor = cls.professor || null
+      cls.classroom = cls.classroom || null
+      
+      return true
+    })
+
     this.isProcessingImage = false
     this.refresh()
     
@@ -595,15 +654,13 @@ async processScheduleImage() {
       'success'
     )
   } catch (error) {
-    console.error('Error processing schedule image:', error)
+    console.error('Error:', error)
     this.isProcessingImage = false
     this.refresh()
-    notificationUtils.showToast(
-      error.message || 'Error al procesar la imagen',
-      'error'
-    )
+    notificationUtils.showToast(error.message || 'Error al procesar', 'error')
   }
 }
+
 
 fileToBase64(file) {
   return new Promise((resolve, reject) => {
