@@ -573,6 +573,8 @@ async processScheduleImage() {
     
     const { data: { text } } = await worker.recognize(file)
     await worker.terminate()
+
+    console.log('📝 Texto extraído:', text)
     
     if (!text || text.trim().length < 50) {
       throw new Error('No se pudo extraer texto. Asegúrate de que la imagen sea legible.')
