@@ -831,59 +831,76 @@ export class ScheduleComponent {
     }
   }
 
-  preprocessImageForOCR(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
+preprocessImageForOCR(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    
+    reader.onload = (e) => {
+      const img = new Image()
       
-      reader.onload = (e) => {
-        const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')
         
-        img.onload = () => {
-          const canvas = document.createElement('canvas')
-          const ctx = canvas.getContext('2d')
-          
-          let width = img.width
-          let height = img.height
-          const maxDimension = 2000
-          
-          if (width > maxDimension || height > maxDimension) {
-            if (width > height) {
-              height = (height / width) * maxDimension
-              width = maxDimension
-            } else {
-              width = (width / height) * maxDimension
-              height = maxDimension
-            }
-          }
-          
-          canvas.width = width
-          canvas.height = height
-          ctx.drawImage(img, 0, 0, width, height)
-          
-          const imageData = ctx.getImageData(0, 0, width, height)
-          const data = imageData.data
-          
-          for (let i = 0; i < data.length; i += 4) {
-            const avg = (data[i] + data[i + 1] + data[i + 2]) / 3
-            const value = avg > 128 ? 255 : 0
-            data[i] = data[i + 1] = data[i + 2] = value
-          }
-          
-          ctx.putImageData(imageData, 0, 0)
-          
-          canvas.toBlob((blob) => {
-            resolve(blob)
-          }, 'image/png')
+        // Escalar a tamaño óptimo para OCR (más grande = mejor)
+        let width = img.width
+        let height = img.height
+        const minDimension = 1500  // Mínimo para buena calidad OCR
+        const maxDimension = 3000  // Máximo para no saturar
+        
+        // Si es muy pequeña, escalar hacia arriba
+        if (width < minDimension && height < minDimension) {
+          const scale = minDimension / Math.min(width, height)
+          width *= scale
+          height *= scale
         }
         
-        img.onerror = reject
-        img.src = e.target.result
+        // Si es muy grande, escalar hacia abajo
+        if (width > maxDimension || height > maxDimension) {
+          const scale = maxDimension / Math.max(width, height)
+          width *= scale
+          height *= scale
+        }
+        
+        canvas.width = width
+        canvas.height = height
+        
+        // Dibujar con suavizado para mejor calidad
+        ctx.imageSmoothingEnabled = true
+        ctx.imageSmoothingQuality = 'high'
+        ctx.drawImage(img, 0, 0, width, height)
+        
+        // Aplicar mejoras MÁS SUAVES (no tan agresivas)
+        const imageData = ctx.getImageData(0, 0, width, height)
+        const data = imageData.data
+        
+        // Aumentar contraste pero mantener más información
+        const contrast = 1.3  // Factor de contraste moderado
+        const factor = (259 * (contrast + 255)) / (255 * (259 - contrast))
+        
+        for (let i = 0; i < data.length; i += 4) {
+          // Aplicar contraste a cada canal
+          data[i] = Math.min(255, Math.max(0, factor * (data[i] - 128) + 128))
+          data[i + 1] = Math.min(255, Math.max(0, factor * (data[i + 1] - 128) + 128))
+          data[i + 2] = Math.min(255, Math.max(0, factor * (data[i + 2] - 128) + 128))
+        }
+        
+        ctx.putImageData(imageData, 0, 0)
+        
+        // Convertir a blob
+        canvas.toBlob((blob) => {
+          resolve(blob)
+        }, 'image/png', 1.0)  // Máxima calidad
       }
       
-      reader.onerror = reject
-      reader.readAsDataURL(file)
-    })
-  }
+      img.onerror = reject
+      img.src = e.target.result
+    }
+    
+    reader.onerror = reject
+    reader.readAsDataURL(file)
+  })
+}
 
   buildScheduleExtractionPrompt(text) {
     return `Eres un experto en analizar horarios escolares de Costa Rica.
