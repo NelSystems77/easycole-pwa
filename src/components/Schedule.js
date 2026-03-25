@@ -902,49 +902,99 @@ preprocessImageForOCR(file) {
   })
 }
 
-  buildScheduleExtractionPrompt(text) {
-    return `Eres un experto en analizar horarios escolares de Costa Rica.
+buildScheduleExtractionPrompt(text) {
+  return `Eres un experto en analizar horarios escolares de Costa Rica en formato de TABLA.
 
 TEXTO EXTRAÍDO DE UN HORARIO ESCOLAR:
 ${text}
 
-TAREA:
-Extrae TODAS las clases del horario. Los horarios pueden tener formato de tabla con días (Lunes, Martes, etc.) y horas.
+ANÁLISIS DE ESTRUCTURA:
+Este texto proviene de una TABLA con esta estructura típica:
 
-REGLAS CRÍTICAS:
-1. Extrae CADA clase que encuentres
-2. IGNORA completamente períodos de "RECREO", "RECESO" o similares
-3. Si una materia tiene "/A" y "/B" (como "Física A/B"), créalas como DOS clases separadas
-4. Los días deben ser exactamente: Lunes, Martes, Miércoles, Jueves, Viernes
-5. Las horas deben estar en formato HH:MM (24 horas)
-6. Si no encuentras profesor o aula, usa null
-7. Si el horario tiene secciones MAÑANA y TARDE, procesa AMBAS
+┌──────────┬─────────┬─────────┬───────────┬─────────┬─────────┐
+│ HORARIO  │  LUNES  │ MARTES  │ MIÉRCOLES │ JUEVES  │ VIERNES │
+├──────────┼─────────┼─────────┼───────────┼─────────┼─────────┤
+│ 7:00-7:40│ Clase 1 │ Clase 2 │  Clase 3  │ Clase 4 │ Clase 5 │
+│ 7:40-8:20│ Clase 6 │ Clase 7 │  Clase 8  │ Clase 9 │Clase 10 │
+└──────────┴─────────┴─────────┴───────────┴─────────┴─────────┘
 
-EJEMPLOS DE FORMATO:
-- "7:00-7:40 Español" → start_time: "07:00", end_time: "07:40", subject: "Español"
-- "Matemática A/B" → DOS clases: "Matemática A" y "Matemática B"
-- "NAVARRO DINA" → professor: "NAVARRO DINA"
+INSTRUCCIONES CRÍTICAS PARA DETECTAR DÍAS:
 
-RESPONDE SOLO CON ESTE JSON (sin markdown, sin explicaciones):
+1. BUSCA ENCABEZADOS: Si el texto contiene "Lunes Martes Miércoles Jueves Viernes", esa es la guía de columnas.
+
+2. PATRÓN DE LECTURA:
+   - El texto se lee por FILAS (horarios)
+   - Cada fila tiene 5 columnas (una por día)
+   - Las clases aparecen en el ORDEN: Lunes → Martes → Miércoles → Jueves → Viernes
+
+3. EJEMPLO DE INTERPRETACIÓN:
+   Si ves esto:
+   "7:40-8:20  Física Matemática  Gestión Producción  Gestión Producción  Gestión Producción  Inglés"
+   
+   Significa:
+   - Lunes 7:40-8:20: Física Matemática
+   - Martes 7:40-8:20: Gestión Producción
+   - Miércoles 7:40-8:20: Gestión Producción
+   - Jueves 7:40-8:20: Gestión Producción
+   - Viernes 7:40-8:20: Inglés
+
+4. DETECCIÓN DE COLUMNAS:
+   - Si una clase aparece VARIAS VECES en la misma fila → son DÍAS DIFERENTES
+   - Si una clase aparece una sola vez → probablemente es solo un día (usa el contexto)
+   - Las clases están SEPARADAS por espacios o nombres de profesores
+
+5. NOMBRES DE PROFESORES COMO SEPARADORES:
+   Si ves:
+   "Física SOLANO  Gestión NAVARRO  Gestión NAVARRO  Gestión NAVARRO  Inglés MORA"
+   
+   Los profesores indican SEPARACIÓN entre columnas:
+   - Lunes: Física - SOLANO
+   - Martes: Gestión - NAVARRO
+   - Miércoles: Gestión - NAVARRO
+   - Jueves: Gestión - NAVARRO
+   - Viernes: Inglés - MORA
+
+6. REGLAS ESPECIALES:
+   - Si una materia se repite 3-4 veces seguidas → probablemente es Martes, Miércoles, Jueves
+   - Si ves "A/B" una sola vez → NO la multipliques por días, divídela en A y B del MISMO día
+   - IGNORA "RECREO" y "Receso" completamente
+
+7. DISTRIBUCIÓN ESPERADA:
+   - Un horario típico tiene 8-12 clases POR DÍA
+   - Total: ~40-60 clases en toda la semana
+   - NO todas las clases deben estar en Lunes
+
+FORMATO DE RESPUESTA:
+Responde ÚNICAMENTE con JSON (sin markdown, sin explicaciones):
+
 {
   "classes": [
     {
-      "subject": "Nombre exacto de la materia",
+      "subject": "Física Matemática A",
       "day": "Lunes",
-      "start_time": "07:00",
+      "start_time": "07:40",
       "end_time": "08:20",
-      "professor": "NOMBRE APELLIDO o null",
-      "classroom": "Aula X o null"
+      "professor": "SOLANO MERYBETH",
+      "classroom": null
+    },
+    {
+      "subject": "Gestión de la Producción",
+      "day": "Martes",
+      "start_time": "07:40",
+      "end_time": "08:20",
+      "professor": "NAVARRO DINA",
+      "classroom": null
     }
   ]
 }
 
-IMPORTANTE: 
-- Incluye TODAS las clases que encuentres
-- NO inventes información
-- Si algo no está claro, usa null
-- NO incluyas recreos`
-  }
+VALIDACIÓN FINAL:
+- Verifica que haya clases para TODOS los días (Lunes a Viernes)
+- Verifica que cada día tenga varias clases (no todas en un solo día)
+- Los horarios deben ser coherentes (07:00-16:30 aproximadamente)
+
+EXTRAE TODAS LAS CLASES DISTRIBUYÉNDOLAS CORRECTAMENTE POR DÍAS.`
+}
 
   removeExtractedClass(day, index) {
     const classesForDay = this.extractedClasses.filter(c => c.day === day)
