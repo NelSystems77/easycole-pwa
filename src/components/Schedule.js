@@ -625,9 +625,11 @@ REGLAS:
 
     const data = await response.json()
     let jsonText = data.choices[0].message.content.trim()
+    console.log('🤖 Respuesta completa de Groq:', jsonText)
     jsonText = jsonText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim()
     
     const schedule = JSON.parse(jsonText)
+    console.log('📦 Schedule parseado:', schedule)
     
     if (!schedule.classes || schedule.classes.length === 0) {
       throw new Error('No se encontraron clases')
